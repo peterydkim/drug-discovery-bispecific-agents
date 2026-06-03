@@ -25,19 +25,23 @@ drug-discovery-bispecific-agents/
 
 ## Pipeline Sequence
 
-```
-01 Target ID → 02 Validation → 03 Design (i0) → 04 SPR → 05 Cell
-                    ↑                                      │
-                    └──────── REFINEMENT LOOP ─────────────┘
-                    (03 ← 04+05, optionally informed by 07)
-                           ↓
-                       06 In Vivo
+```mermaid
+flowchart LR
+    A["01 Target ID"] --> B["02 Validation"]
+    B --> C["03 Bispecific Design"]
+    C --> D["04 SPR Binding"]
+    D --> E["05 Cell Functional"]
+    E -->|"Weaknesses + Gaps"| C
+    E --> F["06 In Vivo / Clinical"]
+    G["07 Experimental Data"] -.->|"Predicted vs Observed"| D
+    G -.->|"Predicted vs Observed"| E
+    G -.->|"Clinical Biomarkers"| F
 
-Module 07 (Experimental Data) feeds into 04, 05, and 06
-whenever wet lab results are available.
+    classDef main fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef optional fill:#fff3e0,stroke:#e65100,stroke-width:2px,stroke-dasharray: 5 5
+    class A,B,C,D,E,F main
+    class G optional
 ```
-
-When wet lab results are available, modules 04 and 05 produce a **predicted vs observed comparison** showing where computational predictions were right or wrong.
 
 Each agent outputs both:
 1. A markdown report (human-readable)
@@ -51,12 +55,23 @@ The JSON format enables:
 
 ### Iterative Refinement Loop
 
-```
-Iteration 0:  03 (initial design) → 04 (binding) → 05 (functional)
-Iteration 1:  03 (refinement)     → 04 (re-eval)  → 05 (re-eval)
-Iteration 2:  03 (refinement)     → 04 (re-eval)  → 05 (re-eval)
-...
-Final:        06 (in vivo / clinical) — uses best iteration
+```mermaid
+flowchart TD
+    A["03 Bispecific Design"] --> B["04 SPR Binding"]
+    B --> C["05 Cell Functional"]
+    C -->|"Binding weaknesses + Functional gaps"| A
+    C --> D{"Stop Criteria?"}
+    D -->|"Max iterations or plateau"| E["06 In Vivo / Clinical"]
+    D -->|"Continue"| A
+
+    classDef design fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef data fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef decision fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef final fill:#fce4ec,stroke:#c62828,stroke-width:2px
+    class A design
+    class B,C data
+    class D decision
+    class E final
 ```
 
 The refinement prompt (`agents/03-bispecific-design/refinement-prompt.md`) receives binding and functional weaknesses and proposes targeted fixes: affinity maturation, format switching, valency adjustment, Fc engineering, epitope shifts, or linker optimization. Stop criteria: 3 iterations max, improvement plateau (<10% delta), or agent flags that the format cannot be salvaged.
@@ -106,11 +121,50 @@ Map each module folder to a LangChain agent node. The `orchestrator/prompt.md` d
 | 06 In Vivo | In vivo efficacy, clinical synthesis, safety | ClinicalTrials.gov, PubMed, PMC | Markdown + JSON |
 | 07 Experimental Data | Ingest wet lab results, structured metadata | SPR instruments, ELISA readers, in vivo study reports | Markdown + JSON |
 
+## Output Structure
+
+```mermaid
+flowchart TD
+    A["Pipeline Output"] --> B["{target}-workflow-results.md"]
+    A --> C["iterations/"]
+    C --> D["i0/"]
+    C --> E["i1/"]
+    C --> F["i2/ ..."]
+    D --> G["01-target-id.json"]
+    D --> H["02-validation.json"]
+    D --> I["03-design.json"]
+    D --> J["04-spr.json"]
+    D --> K["05-cell.json"]
+    E --> L["03-refinement.json"]
+    E --> M["04-spr.json"]
+    E --> N["05-cell.json"]
+    D --> O["07-experiment-{id}.json"]
+
+    classDef file fill:#f5f5f5,stroke:#424242,stroke-width:1px
+    classDef dir fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    class A dir
+    class B file
+    class C,D,E,F dir
+    class G,H,I,J,K,L,M,N,O file
+```
+
 ## Requirements
 
 - Any LLM with web search capability (Tavily, web fetch)
 - No proprietary data required. All sources are public
 - For automated runs: `pip install openai` and set `OPENAI_API_KEY`
+
+## Why This Matters
+
+This pipeline is not a literature review tool. It mirrors how a real drug discovery team operates:
+
+1. **Design a molecule** → predict its binding and function
+2. **Run experiments** → get real SPR, cell, and in vivo data
+3. **Compare predicted vs observed** → identify where the model was wrong
+4. **Redesign** → fix the weak points, iterate until improvement plateaus
+5. **Make a Go/No-Go decision** → with full traceability from target ID through clinical synthesis
+
+The key differentiator is Module 07 (Experimental Data Ingestion). Most AI drug discovery workflows only read public databases. This pipeline ingests wet lab results, validates them (N, SD, controls), compares them against computational predictions, and feeds discrepancies back into the refinement loop. This is how real platforms like Insilico Medicine's Pharma.AI operate — not just literature synthesis, but the full design-build-test-learn cycle.
 
 ## Disclaimer
 
@@ -128,7 +182,7 @@ For any bispecific antibody target pair, the pipeline generates:
 - Clinical trial field and competitive analysis
 - Iterative refinement with quantitative comparison across iterations
 
-A worked PD-1 × VEGF analysis citing public data is available in the [output folder](https://github.com/peterydkim-bot/drug-discovery-bispecific-agents/tree/main/output) for reference.
+A worked PD-1 × VEGF analysis citing public data is available in the [output folder](https://github.com/peterydkim/drug-discovery-bispecific-agents/tree/main/output) for reference.
 
 ## License
 
