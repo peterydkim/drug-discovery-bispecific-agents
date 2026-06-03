@@ -10,7 +10,6 @@ A modular, reproducible workflow of AI agents for computational drug discovery. 
 drug-discovery-bispecific-agents/
 ├── orchestrator/             # Master prompt — coordinates 7 agents in sequence
 ├── agents/
-│   ├── 07-experimental-data/ # NEW: Wet lab experimental data ingestion
 │   ├── 01-target-id/         # Target identification from disease indication
 │   ├── 02-target-validation/ # Genetic, functional, and clinical validation
 │   ├── 03-bispecific-design/ # Molecule design, format selection, structural analysis
@@ -18,7 +17,8 @@ drug-discovery-bispecific-agents/
 │   │   └── refinement-prompt.md  # REFINEMENT: redesign based on binding/functional data
 │   ├── 04-spr-binding/       # Biochemical binding data analysis (SPR, BLI, ELISA)
 │   ├── 05-cell-functional/   # Cell-based assay binding and functional data
-│   └── 06-in-vivo/           # In vivo functional and clinical data synthesis
+│   ├── 06-in-vivo/           # In vivo functional and clinical data synthesis
+│   └── 07-experimental-data/ # Wet lab experimental data ingestion
 ├── knowledge/                # Reference materials, public databases, domain context
 └── output/                   # Generated pipeline results
 ```
@@ -26,19 +26,20 @@ drug-discovery-bispecific-agents/
 ## Pipeline Sequence
 
 ```
-EXPERIMENTAL DATA (07) ──→ feeds into ↓ (when wet lab results available)
-
 01 Target ID → 02 Validation → 03 Design (i0) → 04 SPR → 05 Cell
                     ↑                                      │
                     └──────── REFINEMENT LOOP ─────────────┘
                     (03 ← 04+05, optionally informed by 07)
                            ↓
                        06 In Vivo
+
+Module 07 (Experimental Data) feeds into 04, 05, and 06
+whenever wet lab results are available.
 ```
 
-Modules 04 and 05 now accept experimental data from Module 07. When wet lab results are available, they produce a **predicted vs observed comparison** showing where computational predictions were right or wrong.
+When wet lab results are available, modules 04 and 05 produce a **predicted vs observed comparison** showing where computational predictions were right or wrong.
 
-Each agent now outputs both:
+Each agent outputs both:
 1. A markdown report (human-readable)
 2. A structured JSON block (machine-readable) with a defined schema
 
@@ -65,10 +66,12 @@ The refinement prompt (`agents/03-bispecific-design/refinement-prompt.md`) recei
 ### Using the Python Runner (recommended)
 
 ```bash
-python run_pipeline.py PDCD1 LAG3 "solid tumor immunotherapy"
+pip install openai
+export OPENAI_API_KEY=sk-...
+python run_pipeline.py PDCD1 VEGFA "solid tumor immunotherapy"
 ```
 
-The runner reads all agent prompts, substitutes your target pair and disease, and runs each module sequentially. Outputs are automatically saved to `output/{target-slug}-workflow-results.md` and per-iteration JSON files in `output/iterations/`.
+The runner reads all agent prompts, substitutes your target pair and disease, calls the LLM API for each agent, and saves output to `output/{target-slug}-workflow-results.md` and per-iteration JSON files in `output/iterations/`.
 
 ### Manual (step-by-step)
 
@@ -93,8 +96,7 @@ Map each module folder to a LangChain agent node. The `orchestrator/prompt.md` d
 ## Module Summary
 
 | Module | Role | Key Data Sources | Output |
-|---|---|---|---|---|
-| 07 Experimental Data | Ingest wet lab results, structured metadata | SPR instruments, ELISA readers, in vivo study reports | Markdown + JSON |
+|---|---|---|---|
 | 01 Target ID | Disease → candidate targets | Open Targets, DisGeNET, GWAS Catalog | Markdown + JSON |
 | 02 Validation | Genetic + functional evidence | ClinVar, gnomAD, UniProt, ClinGen, PubMed | Markdown + JSON |
 | 03 Bispecific Design | Format, structure, developability | PDB, SAbDab, Thera-SAbDab, AlphaFold DB | Markdown + JSON |
@@ -102,12 +104,13 @@ Map each module folder to a LangChain agent node. The `orchestrator/prompt.md` d
 | 04 SPR Binding | Kinetic/affinity data analysis + predicted vs observed | ChEMBL, BindingDB, PubChem, Module 07 | Markdown + JSON |
 | 05 Cell Functional | Cell-based functional data + predicted vs observed | PubMed, PMC, Module 07 | Markdown + JSON |
 | 06 In Vivo | In vivo efficacy, clinical synthesis, safety | ClinicalTrials.gov, PubMed, PMC | Markdown + JSON |
+| 07 Experimental Data | Ingest wet lab results, structured metadata | SPR instruments, ELISA readers, in vivo study reports | Markdown + JSON |
 
 ## Requirements
 
 - Any LLM with web search capability (Tavily, web fetch)
 - No proprietary data required. All sources are public
-- No API keys needed for research (search access is recommended)
+- For automated runs: `pip install openai` and set `OPENAI_API_KEY`
 
 ## Disclaimer
 
@@ -118,14 +121,14 @@ All data sourced from published public databases and peer-reviewed literature. N
 For any bispecific antibody target pair, the pipeline generates:
 
 - Target identification and disease association rankings
-- Genetic, functional, and pharmacological validation  
+- Genetic, functional, and pharmacological validation
 - Format selection and structural analysis
 - Published SPR/BLI binding data comparison
 - Cell-based functional data from clinical candidates
 - Clinical trial field and competitive analysis
 - Iterative refinement with quantitative comparison across iterations
 
-A worked analysis citing public data (including Nature Medicine 2023 binding kinetics) is available in the [commit history](https://github.com/peterkim/drug-discovery-bispecific-agents/tree/main/output) for reference.
+A worked PD-1 × VEGF analysis citing public data is available in the [output folder](https://github.com/peterydkim-bot/drug-discovery-bispecific-agents/tree/main/output) for reference.
 
 ## License
 
