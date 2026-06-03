@@ -1,0 +1,17 @@
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+.env
+.vscode/
+.idea/
+output/iterations/
+runs/
+papers/
+pool/
+property/
+configs/secret_keys.py
+*.log
+dist/
+*.egg-info/
