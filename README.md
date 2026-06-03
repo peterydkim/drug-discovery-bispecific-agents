@@ -37,8 +37,8 @@ flowchart LR
     G -.->|"Predicted vs Observed"| E
     G -.->|"Clinical Biomarkers"| F
 
-    classDef main fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef optional fill:#fff3e0,stroke:#e65100,stroke-width:2px,stroke-dasharray: 5 5
+    classDef main fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
+    classDef optional fill:#E65100,stroke:#000000,stroke-width:3px,color:#000000,stroke-dasharray: 5 5
     class A,B,C,D,E,F main
     class G optional
 ```
@@ -64,10 +64,10 @@ flowchart TD
     D -->|"Max iterations or plateau"| E["06 In Vivo / Clinical"]
     D -->|"Continue"| A
 
-    classDef design fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    classDef data fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef decision fill:#fff9c4,stroke:#f57f17,stroke-width:2px
-    classDef final fill:#fce4ec,stroke:#c62828,stroke-width:2px
+    classDef design fill:#1B5E20,stroke:#000000,stroke-width:3px,color:#000000
+    classDef data fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
+    classDef decision fill:#F57F17,stroke:#000000,stroke-width:3px,color:#000000
+    classDef final fill:#C62828,stroke:#000000,stroke-width:3px,color:#000000
     class A design
     class B,C data
     class D decision
@@ -124,28 +124,26 @@ Map each module folder to a LangChain agent node. The `orchestrator/prompt.md` d
 ## Output Structure
 
 ```mermaid
-flowchart TD
-    A["Pipeline Output"] --> B["{target}-workflow-results.md"]
-    A --> C["iterations/"]
-    C --> D["i0/"]
-    C --> E["i1/"]
-    C --> F["i2/ ..."]
-    D --> G["01-target-id.json"]
-    D --> H["02-validation.json"]
-    D --> I["03-design.json"]
-    D --> J["04-spr.json"]
-    D --> K["05-cell.json"]
-    E --> L["03-refinement.json"]
-    E --> M["04-spr.json"]
-    E --> N["05-cell.json"]
-    D --> O["07-experiment-{id}.json"]
+graph TD
+    ROOT["Pipeline Output"] --> FINAL["{target}-workflow-results.md"]
+    ROOT --> ITER["iterations/"]
+    ITER --> I0["i0/"]
+    ITER --> I1["i1/"]
+    ITER --> I2["i2/ ..."]
+    I0 --> F1["01-target-id.json"]
+    I0 --> F2["02-validation.json"]
+    I0 --> F3["03-design.json"]
+    I0 --> F4["04-spr.json"]
+    I0 --> F5["05-cell.json"]
+    I0 --> F6["07-experiment-{id}.json"]
+    I1 --> R1["03-refinement.json"]
+    I1 --> R2["04-spr.json"]
+    I1 --> R3["05-cell.json"]
 
-    classDef file fill:#f5f5f5,stroke:#424242,stroke-width:1px
-    classDef dir fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    class A dir
-    class B file
-    class C,D,E,F dir
-    class G,H,I,J,K,L,M,N,O file
+    classDef dir fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
+    classDef file fill:#E0E0E0,stroke:#000000,stroke-width:2px,color:#000000
+    class ROOT,ITER,I0,I1,I2 dir
+    class FINAL,F1,F2,F3,F4,F5,F6,R1,R2,R3 file
 ```
 
 ## Requirements
