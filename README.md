@@ -2,6 +2,41 @@
 
 A modular, reproducible workflow of AI agents for computational drug discovery. Each agent handles one stage of the drug discovery pipeline. Copy the folder, swap your target, and run.
 
+**Live app: https://drug-discovery-bispecific-agents.netlify.app** — runs the pipeline in a browser, grounded against live public databases, with a citation audit on every step and an in-silico bench for structure and developability. Bring your own Anthropic or OpenAI key; it stays in your browser.
+
+See [REVIEW.md](REVIEW.md) for the findings that motivated the app, including several defects in `run_pipeline.py`.
+
+---
+
+## Three ways to run this
+
+| | What it is | Grounding | Best for |
+|---|---|---|---|
+| **Web app** (`app/`) | Vite SPA + Netlify edge functions | Live: UniProt, AlphaFold DB, Open Targets, RCSB PDB, ESMFold, ChEMBL, PubMed, ClinicalTrials.gov | Running the whole pipeline and reading the evidence audit |
+| **MCP server** (`mcp/server.mjs`) | 10 tools over stdio | Same sources, as agent tools | Driving the pipeline from Claude Code or any MCP client |
+| **Prompts** (`agents/`) | Markdown, self-contained | Whatever your LLM can reach | Running one stage by hand |
+
+The prompts remain the single source of truth. `scripts/gen-prompts.mjs` bakes them into the app at build time, so the deployed site runs the same text a scientist would paste into a chat window.
+
+### Web app
+
+```bash
+npm --prefix app install
+netlify dev
+```
+
+Open the printed URL, add an API key in Settings, and run. To deploy your own copy, point Netlify at this repo — `netlify.toml` has the build command and the edge functions.
+
+### MCP server
+
+Project scope is preconfigured in `.mcp.json`, so Claude Code picks it up on start. To register it globally:
+
+```bash
+claude mcp add bispec -- node "$(pwd)/mcp/server.mjs"
+```
+
+Tools: `uniprot_lookup`, `open_targets_profile`, `alphafold_model`, `pdb_search`, `pdb_entry`, `esmfold_predict`, `sequence_properties`, `chembl_target`, `pubmed_search`, `clinical_trials`. See [mcp/README.md](mcp/README.md).
+
 ---
 
 ## Architecture
@@ -20,6 +55,9 @@ drug-discovery-bispecific-agents/
 │   ├── 06-in-vivo/           # In vivo functional and clinical data synthesis
 │   └── 07-experimental-data/ # Wet lab experimental data ingestion
 ├── knowledge/                # Reference materials, public databases, domain context
+├── app/                      # Web app — orchestrator, in-silico bench, evidence audit
+├── mcp/                      # MCP server exposing the data sources as tools
+├── netlify/edge-functions/   # Streaming LLM proxy + public-database proxy
 └── output/                   # Generated pipeline results
 ```
 
@@ -76,37 +114,26 @@ flowchart TD
 
 The refinement prompt (`agents/03-bispecific-design/refinement-prompt.md`) receives binding and functional weaknesses and proposes targeted fixes: affinity maturation, format switching, valency adjustment, Fc engineering, epitope shifts, or linker optimization. Stop criteria: 3 iterations max, improvement plateau (<10% delta), or agent flags that the format cannot be salvaged.
 
-## Quick Start
+## Running one stage by hand
 
-### Using the Python Runner (recommended)
+Each module is a standalone prompt. Copy `agents/NN-*/background.md` and `agents/NN-*/prompt.md` into any LLM with web search, then paste the previous stage's JSON output as context.
+
+## Command line
 
 ```bash
-pip install openai
-export OPENAI_API_KEY=sk-...
-python run_pipeline.py PDCD1 VEGFA "solid tumor immunotherapy"
+export ANTHROPIC_API_KEY=sk-ant-...      # or OPENAI_API_KEY
+python run_pipeline.py PDCD1 LAG3 "metastatic melanoma"
 ```
 
-The runner reads all agent prompts, substitutes your target pair and disease, calls the LLM API for each agent, and saves output to `output/{target-slug}-workflow-results.md` and per-iteration JSON files in `output/iterations/`.
+Python 3.9+, no third-party packages. Resolves both targets against UniProt, Open Targets, AlphaFold DB and the RCSB PDB, injects those records into the prompts, then runs agents 01-06 in sequence. Writes each agent's markdown report **and** its parsed JSON to `output/iterations/i0/`.
 
-### Manual (step-by-step)
-
-Each module is a standalone prompt. Run them sequentially, passing output from each into the next.
-
-Using any LLM with web search, copy each `prompt.md` and run it. Each prompt is self-contained with instructions, data sources, and expected output format.
-
-### Using a Task-Based LLM
-
-Load the `drug-discovery-orchestrator` skill and run the full pipeline:
+It is deliberately a single pass: no refinement loop, no module 07, no web search. Structures and target associations are grounded; affinity and functional values are not. The full design-build-test cycle lives in the app and the orchestrator prompt, so there is only one implementation of it to keep correct.
 
 ```
-Run the full drug discovery pipeline for your bispecific antibody target pair
+--provider anthropic|openai   default: whichever API key is set
+--model MODEL                 default: claude-opus-5 or gpt-4o
+--no-grounding                skip the retrieval pass
 ```
-
-The orchestrator handles all modules, the refinement loop, and final synthesis automatically.
-
-### Using LangChain/LangGraph
-
-Map each module folder to a LangChain agent node. The `orchestrator/prompt.md` defines the graph edges. See `knowledge/public-databases.md` for API endpoints.
 
 ## Module Summary
 
