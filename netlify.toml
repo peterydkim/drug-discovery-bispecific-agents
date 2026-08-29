@@ -1,0 +1,32 @@
+# BiSpec Studio — Vite SPA + Deno edge functions.
+#
+# The LLM proxy and the bio-data proxy run as edge functions rather than
+# serverless functions on purpose: an agent turn streams for minutes, which no
+# request/response function survives, and edge functions meter CPU (50 ms) rather
+# than wall clock. Both handlers are pure I/O.
+
+[build]
+  command = "npm --prefix app ci && npm --prefix app run build"
+  publish = "app/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+
+# Long-lived immutable assets; the HTML shell must always revalidate.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

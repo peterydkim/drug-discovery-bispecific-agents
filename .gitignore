@@ -15,3 +15,9 @@ configs/secret_keys.py
 *.log
 dist/
 *.egg-info/
+# Netlify
+.netlify/
+app/dist/
+app/node_modules/
+app/src/generated/
+*.tsbuildinfo
