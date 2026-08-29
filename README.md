@@ -95,15 +95,19 @@ flowchart LR
     B --> C["03 Bispecific Design"]
     C --> D["04 SPR Binding"]
     D --> E["05 Cell Functional"]
-    E -->|"Weaknesses + Gaps"| C
+    E -->|"weaknesses + gaps"| C
     E --> F["06 In Vivo / Clinical"]
-    G["07 Experimental Data"] -.->|"Predicted vs Observed"| D
-    G -.->|"Predicted vs Observed"| E
-    G -.->|"Clinical Biomarkers"| F
+    G["07 Experimental Data"] -.->|"predicted vs observed"| D
+    G -.-> E
+    G -.-> F
 
-    classDef main fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
-    classDef optional fill:#E65100,stroke:#000000,stroke-width:3px,color:#000000,stroke-dasharray: 5 5
-    class A,B,C,D,E,F main
+    classDef main fill:#DBEAFE,stroke:#1D4ED8,stroke-width:2px,color:#0B1220
+    classDef design fill:#DCFCE7,stroke:#15803D,stroke-width:2px,color:#0B1220
+    classDef final fill:#FEE2E2,stroke:#B91C1C,stroke-width:2px,color:#0B1220
+    classDef optional fill:#FFEDD5,stroke:#C2410C,stroke-width:2px,color:#0B1220,stroke-dasharray:5 5
+    class A,B,D,E main
+    class C design
+    class F final
     class G optional
 ```
 
@@ -125,15 +129,16 @@ Runs in the web app, with the stop criteria enforced in code. Not in the CLI run
 flowchart TD
     A["03 Bispecific Design"] --> B["04 SPR Binding"]
     B --> C["05 Cell Functional"]
-    C -->|"Binding weaknesses + Functional gaps"| A
-    C --> D{"Stop Criteria?"}
-    D -->|"Max iterations or plateau"| E["06 In Vivo / Clinical"]
-    D -->|"Continue"| A
+    C --> D{"stop?"}
+    D -->|"no — feed weaknesses back"| A
+    D -->|"design says no gain"| E["06 In Vivo / Clinical"]
+    D -->|"delta below 10%"| E
+    D -->|"hit iteration ceiling"| E
 
-    classDef design fill:#1B5E20,stroke:#000000,stroke-width:3px,color:#000000
-    classDef data fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
-    classDef decision fill:#F57F17,stroke:#000000,stroke-width:3px,color:#000000
-    classDef final fill:#C62828,stroke:#000000,stroke-width:3px,color:#000000
+    classDef design fill:#DCFCE7,stroke:#15803D,stroke-width:2px,color:#0B1220
+    classDef data fill:#DBEAFE,stroke:#1D4ED8,stroke-width:2px,color:#0B1220
+    classDef decision fill:#FEF3C7,stroke:#B45309,stroke-width:2px,color:#0B1220
+    classDef final fill:#FEE2E2,stroke:#B91C1C,stroke-width:2px,color:#0B1220
     class A design
     class B,C data
     class D decision
@@ -187,24 +192,24 @@ coverage per step.
 
 ## Output Structure
 
-The CLI runner writes one markdown report and one parsed JSON block per agent,
-plus the retrieval records it grounded on:
+The CLI runner writes a markdown report and a parsed JSON block per agent — each
+stem below exists as both `.md` and `.json` — plus the records it grounded on:
 
 ```mermaid
 graph TD
-    ROOT["output/"] --> FINAL["{t1}-{t2}-workflow-results.md"]
+    ROOT["output/"] --> FINAL["gene1-gene2-workflow-results.md"]
     ROOT --> ITER["iterations/i0/"]
     ITER --> G["00-grounding.json"]
-    ITER --> A1["01-target-id .md + .json"]
-    ITER --> A2["02-target-validation .md + .json"]
-    ITER --> A3["03-bispecific-design .md + .json"]
-    ITER --> A4["04-spr-binding .md + .json"]
-    ITER --> A5["05-cell-functional .md + .json"]
-    ITER --> A6["06-in-vivo .md + .json"]
+    ITER --> A1["01-target-id"]
+    ITER --> A2["02-target-validation"]
+    ITER --> A3["03-bispecific-design"]
+    ITER --> A4["04-spr-binding"]
+    ITER --> A5["05-cell-functional"]
+    ITER --> A6["06-in-vivo"]
 
-    classDef dir fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
-    classDef file fill:#E0E0E0,stroke:#000000,stroke-width:2px,color:#000000
-    classDef ground fill:#1B5E20,stroke:#000000,stroke-width:3px,color:#000000
+    classDef dir fill:#E0E7FF,stroke:#4338CA,stroke-width:2px,color:#0B1220
+    classDef file fill:#F1F5F9,stroke:#64748B,stroke-width:2px,color:#0B1220
+    classDef ground fill:#DCFCE7,stroke:#15803D,stroke-width:2px,color:#0B1220
     class ROOT,ITER dir
     class FINAL,A1,A2,A3,A4,A5,A6 file
     class G ground

@@ -239,6 +239,49 @@ check("every mermaid class target is a declared node", () => {
   }
 });
 
+check("mermaid node text is readable against its fill", () => {
+  // A previous commit set dark fills with black text, which parses and renders
+  // but is illegible: #0D47A1 against #000000 is 2.43:1. WCAG AA wants 4.5:1 for
+  // body text. Contrast is arithmetic, so it can be enforced rather than eyeballed.
+  const relLum = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const lin = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  };
+  const contrast = (a, b) => {
+    const [x, y] = [relLum(a), relLum(b)].sort((m, n) => n - m);
+    return (x + 0.05) / (y + 0.05);
+  };
+
+  const bad = [];
+  for (const block of readme.matchAll(/```mermaid\n([\s\S]*?)```/g)) {
+    for (const def of block[1].matchAll(/classDef (\w+) ([^\n]+)/g)) {
+      const fill = def[2].match(/fill:(#[0-9A-Fa-f]{6})/);
+      const color = def[2].match(/color:(#[0-9A-Fa-f]{6})/);
+      if (!fill || !color) continue;
+      const ratio = contrast(fill[1], color[1]);
+      if (ratio < 4.5) {
+        bad.push(`${def[1]}: text ${color[1]} on fill ${fill[1]} is ${ratio.toFixed(2)}:1 (needs 4.5:1)`);
+      }
+    }
+  }
+  if (bad.length) throw new Error(bad.join("; "));
+});
+
+check("every mermaid classDef sets both a fill and a text colour", () => {
+  // A classDef with a fill but no colour inherits the theme's text colour, which
+  // flips between GitHub's light and dark modes and can land unreadable on one.
+  const bad = [];
+  for (const block of readme.matchAll(/```mermaid\n([\s\S]*?)```/g)) {
+    for (const def of block[1].matchAll(/classDef (\w+) ([^\n]+)/g)) {
+      const hasFill = /fill:#/.test(def[2]);
+      const hasColor = /color:#/.test(def[2]);
+      if (hasFill !== hasColor) bad.push(`${def[1]} sets ${hasFill ? "fill without color" : "color without fill"}`);
+    }
+  }
+  if (bad.length) throw new Error(bad.join("; "));
+});
+
 check("edge function routes are all reachable from the app client", () => {
   const client = read("app/src/lib/bio.ts");
   const unused = bioRoutes.filter((r) => !client.includes(r) && r !== "pdbfile");
