@@ -63,6 +63,9 @@ drug-discovery-bispecific-agents/
 
 ## Pipeline Sequence
 
+The full architecture, as implemented by the web app and the orchestrator prompt.
+The CLI runner covers the solid path only — 01 through 06, once.
+
 ```mermaid
 flowchart LR
     A["01 Target ID"] --> B["02 Validation"]
@@ -92,6 +95,8 @@ The JSON format enables:
 - **Traceable history:** All iteration outputs are versioned, making improvements easy to audit
 
 ### Iterative Refinement Loop
+
+Runs in the web app, with the stop criteria enforced in code. Not in the CLI runner.
 
 ```mermaid
 flowchart TD
@@ -150,34 +155,41 @@ It is deliberately a single pass: no refinement loop, no module 07, no web searc
 
 ## Output Structure
 
+The CLI runner writes one markdown report and one parsed JSON block per agent,
+plus the retrieval records it grounded on:
+
 ```mermaid
 graph TD
-    ROOT["Pipeline Output"] --> FINAL["{target}-workflow-results.md"]
-    ROOT --> ITER["iterations/"]
-    ITER --> I0["i0/"]
-    ITER --> I1["i1/"]
-    ITER --> I2["i2/ ..."]
-    I0 --> F1["01-target-id.json"]
-    I0 --> F2["02-validation.json"]
-    I0 --> F3["03-design.json"]
-    I0 --> F4["04-spr.json"]
-    I0 --> F5["05-cell.json"]
-    I0 --> F6["07-experiment-{id}.json"]
-    I1 --> R1["03-refinement.json"]
-    I1 --> R2["04-spr.json"]
-    I1 --> R3["05-cell.json"]
+    ROOT["output/"] --> FINAL["{t1}-{t2}-workflow-results.md"]
+    ROOT --> ITER["iterations/i0/"]
+    ITER --> G["00-grounding.json"]
+    ITER --> A1["01-target-id .md + .json"]
+    ITER --> A2["02-target-validation .md + .json"]
+    ITER --> A3["03-bispecific-design .md + .json"]
+    ITER --> A4["04-spr-binding .md + .json"]
+    ITER --> A5["05-cell-functional .md + .json"]
+    ITER --> A6["06-in-vivo .md + .json"]
 
     classDef dir fill:#0D47A1,stroke:#000000,stroke-width:3px,color:#000000
     classDef file fill:#E0E0E0,stroke:#000000,stroke-width:2px,color:#000000
-    class ROOT,ITER,I0,I1,I2 dir
-    class FINAL,F1,F2,F3,F4,F5,F6,R1,R2,R3 file
+    classDef ground fill:#1B5E20,stroke:#000000,stroke-width:3px,color:#000000
+    class ROOT,ITER dir
+    class FINAL,A1,A2,A3,A4,A5,A6 file
+    class G ground
 ```
+
+Only `i0/` is produced, because the CLI runner is a single pass. Iteration
+directories `i1/`, `i2/` and module 07 experiment files belong to the refinement
+loop, which runs in the web app and the orchestrator prompt. The web app keeps
+its run in the browser and exports the whole thing as one markdown file.
 
 ## Requirements
 
-- Any LLM with web search capability (Tavily, web fetch)
-- No proprietary data required. All sources are public
-- For automated runs: `pip install openai` and set `OPENAI_API_KEY`
+- An Anthropic or OpenAI API key. Nothing else is required to run the pipeline.
+- CLI runner: Python 3.9+, no third-party packages.
+- Web app: Node 22+ and the Netlify CLI for local development.
+- MCP server: Node 18+, no dependencies.
+- All data sources are public. No proprietary data, no paid API is used.
 
 ## Why This Matters
 
