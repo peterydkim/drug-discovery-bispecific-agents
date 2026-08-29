@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "bispec": {
+      "command": "node",
+      "args": ["mcp/server.mjs"],
+      "env": {}
+    }
+  }
+}
