@@ -39,6 +39,29 @@ Tools: `uniprot_lookup`, `open_targets_profile`, `alphafold_model`, `pdb_search`
 
 ---
 
+## Keeping the docs honest
+
+This repo's recurring defect was prose describing behaviour the code did not have:
+a refinement loop that never ran, JSON files never written, output filenames that
+did not exist. `scripts/check-docs.mjs` checks those claims against the source on
+every build.
+
+```bash
+npm --prefix app run check
+```
+
+19 checks, covering: the agent directories match the runner's sequence and the
+app's prompt bundle; the output diagram names exactly the files the code writes;
+the agent count agrees across every document; sources called "live" have a real
+route behind them; the MCP README documents exactly the tools the server exposes;
+the stop criteria in prose match the thresholds in `pipeline.ts`; model ids named
+in docs exist in the code; mermaid nodes referenced in `class` statements are
+declared.
+
+It runs as `prebuild`, so a documentation claim that stops being true fails the
+build — including on Netlify. Add a check here rather than fixing the same
+document twice.
+
 ## Architecture
 
 ```
@@ -142,16 +165,25 @@ It is deliberately a single pass: no refinement loop, no module 07, no web searc
 
 ## Module Summary
 
-| Module | Role | Key Data Sources | Output |
-|---|---|---|---|
-| 01 Target ID | Disease → candidate targets | Open Targets, DisGeNET, GWAS Catalog | Markdown + JSON |
-| 02 Validation | Genetic + functional evidence | ClinVar, gnomAD, UniProt, ClinGen, PubMed | Markdown + JSON |
-| 03 Bispecific Design | Format, structure, developability | PDB, SAbDab, Thera-SAbDab, AlphaFold DB | Markdown + JSON |
-| 03 Refinement | Data-driven redesign (iterative) | Binding JSON (04) + Functional JSON (05) + Experimental JSON (07) | Markdown + JSON |
-| 04 SPR Binding | Kinetic/affinity data analysis + predicted vs observed | ChEMBL, BindingDB, PubChem, Module 07 | Markdown + JSON |
-| 05 Cell Functional | Cell-based functional data + predicted vs observed | PubMed, PMC, Module 07 | Markdown + JSON |
-| 06 In Vivo | In vivo efficacy, clinical synthesis, safety | ClinicalTrials.gov, PubMed, PMC | Markdown + JSON |
-| 07 Experimental Data | Ingest wet lab results, structured metadata | SPR instruments, ELISA readers, in vivo study reports | Markdown + JSON |
+**Live** means the app and the MCP server call it over HTTP and cite what comes
+back. **Named** means the prompt tells the model to consult it, but nothing
+retrieves it — those values come from the model's own knowledge and need checking.
+
+| Module | Role | Live sources | Named only | Output |
+|---|---|---|---|---|
+| 01 Target ID | Disease → candidate targets | Open Targets, UniProt | DisGeNET, GWAS Catalog, COSMIC, Human Protein Atlas | Markdown + JSON |
+| 02 Validation | Genetic + functional evidence | Open Targets (gnomAD constraint, safety liabilities, mouse KO), UniProt, PubMed | ClinVar, ClinGen, PharmGKB | Markdown + JSON |
+| 03 Bispecific Design | Format, structure, developability | RCSB PDB, AlphaFold DB, ESMFold, computed sequence properties | SAbDab, Thera-SAbDab, SAbPred TAP | Markdown + JSON |
+| 03 Refinement | Data-driven redesign (iterative) | Binding JSON (04) + Functional JSON (05) + Experimental JSON (07) | — | Markdown + JSON |
+| 04 SPR Binding | Kinetic/affinity analysis, predicted vs observed | ChEMBL | BindingDB, PubChem, DrugBank, DGIdb | Markdown + JSON |
+| 05 Cell Functional | Cell-based functional data, predicted vs observed | PubMed | PMC, bioRxiv, medRxiv | Markdown + JSON |
+| 06 In Vivo | In vivo efficacy, clinical synthesis, safety | ClinicalTrials.gov, PubMed | EU CTR, WHO ICTRP, FDA approvals | Markdown + JSON |
+| 07 Experimental Data | Ingest wet lab results, structured metadata | — (you supply the data) | — | Markdown + JSON |
+
+No public API returns a bispecific's K<sub>D</sub> or a cell-assay EC<sub>50</sub>,
+so module 04 and 05 numbers stay in the "named only" category by nature. That is
+the gap module 07 exists to close, and the reason the citation audit reports
+coverage per step.
 
 ## Output Structure
 

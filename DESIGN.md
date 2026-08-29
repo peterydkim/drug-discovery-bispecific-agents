@@ -68,6 +68,25 @@ It accepts almost any format. A markdown table, a JSON payload from a Biacore, a
 
 Without Module 07, this workflow is a literature review tool. With it, the workflow mirrors how a real drug discovery team runs: design, test, learn, redesign.
 
+## What Was Built After This Was Written
+
+Three things, in response to a review of the workflow (see `REVIEW.md`):
+
+A web app that runs the pipeline with retrieval before generation. Targets resolve
+against UniProt, Open Targets, AlphaFold DB and the RCSB PDB before any agent
+writes, and every output is audited for whether its numbers carry an identifier.
+The refinement loop I describe above now runs in code, with the stop criteria
+enforced rather than described.
+
+An MCP server, so an agent runtime can call those same databases as tools instead
+of being told a URL and recalling what is behind it.
+
+Computed developability. pI, molecular weight, extinction coefficient, GRAVY,
+charge and the PTM liability motifs are arithmetic on a sequence, so they are
+computed now rather than asserted. The rest of the developability section —
+predicted Tm, expression yield, aggregation — is still asserted, and still needs
+a model behind it.
+
 ## What I Would Build Next
 
 A multi target comparison module that runs the same pipeline against several target pairs at once and produces a ranked report.
@@ -75,6 +94,9 @@ A multi target comparison module that runs the same pipeline against several tar
 A resource estimation module that estimates costs and timelines for each development path: CMC, tox, clinical.
 
 A regulatory readiness module that maps GxP and 21 CFR Part 11 requirements onto each stage of the pipeline.
+
+Antibody numbering, so sequence liabilities can be localised to CDRs instead of
+reported position by position across the whole chain.
 
 ---
 

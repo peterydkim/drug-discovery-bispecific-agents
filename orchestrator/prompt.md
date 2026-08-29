@@ -112,19 +112,28 @@ agents/01-target-id/background.md ← Give the LLM this context first
 22. Copy `agents/06-in-vivo/prompt.md`
 23. Paste all agent JSON outputs (final iteration only) + Module 07 experimental JSON (if available) as context. Run.
 
-### Parallel method (opencode tasks):
+### Subagent method (any agent runtime):
 
-In opencode, you can launch all agents as subagents using the `task` tool:
+Where the host supports subagents, launch each stage as its own task, passing the
+previous stage's JSON as context. The stages are sequential, not parallel: 02
+needs 01's targets, 04 needs 03's design, and so on.
 
-```markdown
-# Step 1: Launch Agent 01 (Target ID)
-Copy agents/01-target-id/prompt.md → task tool
-
-# Step 2: Launch Agent 02 (Validation) — pass Agent 01 output as context
-# Step 3: Continue through Agent 06
+```
+Task 1: agents/01-target-id/prompt.md
+Task 2: agents/02-target-validation/prompt.md  + agent 01 JSON
+Task 3: agents/03-bispecific-design/prompt.md  + agents 01, 02 JSON
+...through agent 06
 ```
 
 Each agent's prompt is self-contained with its own output format and data source instructions.
+
+### Tool-assisted method:
+
+Register the MCP server at `mcp/server.mjs` and the agents can call UniProt,
+Open Targets, AlphaFold DB, the RCSB PDB, ESMFold, ChEMBL, PubMed and
+ClinicalTrials.gov directly, rather than describing a URL and recalling what is
+behind it. This is the recommended way to run the pipeline from an agent
+runtime.
 
 ## Prerequisites
 
@@ -169,18 +178,24 @@ output/
 ├── {target_pair_slug}-workflow-results.md    # Final synthesis (Agent 06)
 ├── iterations/
 │   ├── i0/
+│   │   ├── 00-grounding.json               # Records retrieved before generation
 │   │   ├── 01-target-id.json               # Agent 01 target identification
-│   │   ├── 02-validation.json              # Agent 02 target validation
-│   │   ├── 03-design.json                  # Agent 03 initial design
-│   │   ├── 04-spr.json                     # Agent 04 binding data
-│   │   ├── 05-cell.json                    # Agent 05 functional data
+│   │   ├── 02-target-validation.json       # Agent 02 target validation
+│   │   ├── 03-bispecific-design.json       # Agent 03 initial design
+│   │   ├── 04-spr-binding.json             # Agent 04 binding data
+│   │   ├── 05-cell-functional.json         # Agent 05 functional data
+│   │   ├── 06-in-vivo.json                 # Agent 06 clinical synthesis
 │   │   └── 07-experiment-{id}.json         # Module 07 experimental data (one per experiment)
 │   ├── i1/
 │   │   ├── 03-refinement.json              # Agent 03 refinement
-│   │   ├── 04-spr.json                     # Agent 04 re-evaluation
-│   │   ├── 05-cell.json                    # Agent 05 re-evaluation
+│   │   ├── 04-spr-binding.json             # Agent 04 re-evaluation
+│   │   ├── 05-cell-functional.json         # Agent 05 re-evaluation
 │   │   └── 07-experiment-{id}.json         # Module 07 experimental data
 │   └── i2/ ...
+
+Each agent also writes the markdown report alongside its JSON, under the same
+stem. The CLI runner produces `i0/` only; `i1/` and later come from the
+refinement loop, which runs in the web app.
 ```
 
 This structure makes it easy to diff iterations and trace improvements.

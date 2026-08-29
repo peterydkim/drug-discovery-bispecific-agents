@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "node ../scripts/gen-prompts.mjs",
+    "prebuild": "node ../scripts/gen-prompts.mjs && node ../scripts/check-docs.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "node ../scripts/check-docs.mjs"
   },
   "dependencies": {
     "@types/dompurify": "^3.0.5",

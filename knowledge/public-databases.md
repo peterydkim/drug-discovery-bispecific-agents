@@ -2,11 +2,17 @@
 
 All databases are publicly accessible. No proprietary data.
 
+**Wired** marks a source this repo retrieves programmatically — via `/api/bio/*`
+in the app, the matching tool in `mcp/server.mjs`, and the grounding pass in
+`run_pipeline.py`. Unmarked sources are named in prompts but not retrieved: if an
+agent reports a value from one, it came from the model, not from the database.
+Treat it as a claim to verify.
+
 ## Target Identification
 
 | Database | URL | Description |
 |---|---|---|
-| Open Targets Platform | https://platform.opentargets.org | Integrates genetics, drugs, pathways, literature |
+| Open Targets Platform **(wired)** | https://platform.opentargets.org | Integrates genetics, drugs, pathways, literature |
 | Open Targets Genetics | https://genetics.opentargets.org | GWAS → causal gene mapping |
 | DisGeNET | https://www.disgenet.org | Gene-disease association database |
 | GWAS Catalog | https://www.ebi.ac.uk/gwas | Published GWAS with variant-trait associations |
@@ -20,24 +26,25 @@ All databases are publicly accessible. No proprietary data.
 | ClinVar | https://www.ncbi.nlm.nih.gov/clinvar | Human variant-phenotype relationships |
 | gnomAD | https://gnomad.broadinstitute.org | 800K+ individuals, allele frequencies, pLI/LOEUF |
 | ClinGen | https://clinicalgenome.org | Gene-disease validity curations |
-| UniProt | https://www.uniprot.org | Protein sequence and functional annotation |
+| UniProt **(wired)** | https://www.uniprot.org | Protein sequence and functional annotation |
 | PharmGKB | https://www.pharmgkb.org | Drug response pharmacogenomics |
 
 ## Bispecific Antibody Design
 
 | Database | URL | Description |
 |---|---|---|
-| PDB | https://www.rcsb.org | 254K+ protein structures |
+| PDB **(wired)** | https://www.rcsb.org | 254K+ protein structures |
 | SAbDab | https://opig.stats.ox.ac.uk/webapps/sabdab-sabpred/sabdab | All antibody structures from PDB |
 | Thera-SAbDab | https://opig.stats.ox.ac.uk/webapps/sabdab-sabpred/therasabdab/search | WHO-recognized therapeutic antibodies |
-| AlphaFold DB | https://alphafold.ebi.ac.uk | 200M+ predicted protein structures |
+| AlphaFold DB **(wired)** | https://alphafold.ebi.ac.uk | 200M+ predicted protein structures |
 | SAbPred | https://opig.stats.ox.ac.uk/webapps/sabdab-sabpred/sabpred | Antibody prediction toolbox |
+| ESMFold **(wired)** | https://esmatlas.com | Single-sequence structure prediction, 20-400 residues, no key |
 
 ## Biochemical Binding Data
 
 | Database | URL | Description |
 |---|---|---|
-| ChEMBL | https://www.ebi.ac.uk/chembl | 2.4M+ compounds, 20M+ bioactivities, CC BY-SA 3.0 |
+| ChEMBL **(wired)** | https://www.ebi.ac.uk/chembl | 2.4M+ compounds, 20M+ bioactivities, CC BY-SA 3.0 |
 | BindingDB | https://www.bindingdb.org | Protein-ligand binding affinities |
 | PDBbind | https://www.pdbbind-plus.org.cn | Binding affinity data for PDB complexes (free through v2020; v2020+ paid) |
 | PubChem | https://pubchem.ncbi.nlm.nih.gov | NIH chemical info + BioAssay data |
@@ -48,7 +55,7 @@ All databases are publicly accessible. No proprietary data.
 
 | Source | URL | Description |
 |---|---|---|
-| PubMed | https://pubmed.ncbi.nlm.nih.gov | 37M+ biomedical citations |
+| PubMed **(wired)** | https://pubmed.ncbi.nlm.nih.gov | 37M+ biomedical citations |
 | PubMed Central | https://pmc.ncbi.nlm.nih.gov | Full-text open access articles |
 | BioRxiv | https://www.biorxiv.org | Preprints in biology |
 | MedRxiv | https://www.medrxiv.org | Preprints in clinical research |
@@ -57,12 +64,16 @@ All databases are publicly accessible. No proprietary data.
 
 | Database | URL | Description |
 |---|---|---|
-| ClinicalTrials.gov | https://clinicaltrials.gov | 480K+ clinical studies, API-accessible |
+| ClinicalTrials.gov **(wired)** | https://clinicaltrials.gov | 480K+ clinical studies, API-accessible |
 | EU CTR | https://www.clinicaltrialsregister.eu | EU clinical trials |
 | WHO ICTRP | https://trialsearch.who.int | International clinical trials |
 | FDA Novel Drug Approvals | https://www.fda.gov/drugs/novel-drug-approvals-fda/novel-drug-approvals-2026 | Annual approval summaries |
 
 ## PD-1 / LAG-3 Specific Structures (PDB)
+
+Example structures for the worked target pair. For any other pair, do not reuse
+these — search the PDB for that target instead (`pdb_search` in the MCP server,
+or `/api/bio/pdb-search` in the app).
 
 | PDB ID | Description | Source |
 |---|---|---|

@@ -1,13 +1,25 @@
 ---
 name: drug-discovery-orchestrator
-description: Run the full 6-agent drug discovery pipeline for bispecific antibodies. Use when the user wants to analyze a bispecific antibody, run a drug discovery workflow, evaluate immuno-oncology targets, or get a Go/No-Go recommendation. Keywords: drug discovery, bispecific antibody, immuno-oncology, PD-1, LAG-3, VEGF, CTLA-4, TIGIT, TIM-3, target identification, target validation, SPR binding, cell functional, in vivo, clinical trial analysis, Go/No-Go.
+description: Run the full 7-module drug discovery pipeline for bispecific antibodies. Use when the user wants to analyze a bispecific antibody, run a drug discovery workflow, evaluate immuno-oncology targets, or get a Go/No-Go recommendation. Keywords: drug discovery, bispecific antibody, immuno-oncology, PD-1, LAG-3, VEGF, CTLA-4, TIGIT, TIM-3, target identification, target validation, SPR binding, cell functional, in vivo, clinical trial analysis, Go/No-Go.
 license: MIT
-compatibility: opencode
+compatibility: any agent runtime with subagents or tool calling
 ---
+
+## Before You Start
+
+If the `bispec` MCP server is available, use it. It exposes `uniprot_lookup`,
+`open_targets_profile`, `alphafold_model`, `pdb_search`, `pdb_entry`,
+`esmfold_predict`, `sequence_properties`, `chembl_target`, `pubmed_search` and
+`clinical_trials`. Resolve both targets before agent 01 writes anything, and pass
+the retrieved records into each agent as grounding.
+
+Without those tools you are working from recall. Say so in the report rather than
+presenting recalled values as database lookups, and put anything you could not
+verify in the gaps list.
 
 ## Overview
 
-You are the DRUG DISCOVERY ORCHESTRATOR. Run 6 specialized agents in sequence to produce a complete drug discovery analysis for bispecific antibodies in immuno-oncology.
+You are the DRUG DISCOVERY ORCHESTRATOR. Run agents 01 through 06 in sequence to produce a complete drug discovery analysis for bispecific antibodies in immuno-oncology. Module 07 sits alongside the sequence and runs whenever wet-lab data is available.
 
 The scientist using you doesn't need to know about agents, JSON handoffs, or refinement loops. They just describe the disease and optionally the target pair. You handle everything.
 
@@ -86,7 +98,7 @@ Include their content as background context for every subagent.
 
 ### Phase 1: Sequential Agent Execution (Iteration 0)
 
-For each agent 01-05, launch as an opencode `task` subagent:
+For each agent 01-05, launch as a subagent where the host supports it:
 
 **For each subagent call:**
 1. Read the agent's `prompt.md` from `agents/XX-name/prompt.md`
